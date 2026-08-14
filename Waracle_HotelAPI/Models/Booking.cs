@@ -6,10 +6,11 @@ namespace Waracle_HotelAPI.Models
     {
         [Key]
         public int Id { get; set; } 
-        public string Reference { get; set; }
+        public string Reference { get; set;}
         public int RoomId { get; set; }
+        public string RoomType { get; set; } = "";
         public DateTime BookingDate { get; set; }
-        public DateTime ArrivalDate { get; set; }
-        public DateTime DepartureDate { get; set; }
+        public DateOnly ArrivalDate { get; set; }
+        public DateOnly DepartureDate { get; set; }
     }
 }

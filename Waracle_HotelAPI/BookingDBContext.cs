@@ -28,6 +28,7 @@ namespace Waracle_HotelAPI
 
             modelBuilder.Entity<Booking>().HasIndex(b => new { b.RoomId, b.DepartureDate, b.ArrivalDate }).IsClustered(false);//Indexes are important for performance when doing booking checks and Reference Lookups
             modelBuilder.Entity<Booking>().HasIndex(b => new { b.Reference }).IsClustered(false);//Non clustered index grants performance for checking room availability, while letting the clustered index handle lookups
+            modelBuilder.Entity<Hotel>().HasIndex(b => new { b.Name }).IsClustered(false);//For quick search by name
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

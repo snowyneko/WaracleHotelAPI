@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 using Waracle_HotelAPI;
+using Waracle_HotelAPI.Interfaces;
+using Waracle_HotelAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +13,10 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddScoped<ISeedService, SeedService>();
+builder.Services.AddScoped<IHotelService, HotelService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -18,6 +25,12 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.MapScalarApiReference(options =>
+{
+    options.Title = "Waracle Hotel API";
+    options.Theme = ScalarTheme.Purple;
+    options.ShowSidebar = true;
+});
 
 
 
