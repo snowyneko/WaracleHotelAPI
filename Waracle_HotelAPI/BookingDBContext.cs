@@ -1,0 +1,43 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Waracle_HotelAPI.Models;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
+namespace Waracle_HotelAPI
+{
+    public class BookingDBContext : DbContext
+    {
+        string DBString;
+        public BookingDBContext(IConfiguration config)
+        {
+            DBString = config.GetConnectionString("DefaultConnection") ??"";
+        }
+        public string DBConnectionString { get; set; } = "";
+
+        public DbSet<Hotel> Hotels => Set<Hotel>();
+        public DbSet<Room> Rooms => Set<Room>();
+        public DbSet<Booking> Bookings => Set<Booking>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Room>(entity => {
+                entity.HasKey(r => r.Id).IsClustered(false);
+                entity.HasIndex(r => new { r.HotelId, r.Id }).IsClustered(true);
+            });//Use a hybrid clusted index for Hotel,Room. we will never be looking for a room without knowing the hotel.
+
+            modelBuilder.Entity<Booking>().HasIndex(b => new { b.RoomId, b.DepartureDate, b.ArrivalDate }).IsClustered(false);//Indexes are important for performance when doing booking checks and Reference Lookups
+            modelBuilder.Entity<Booking>().HasIndex(b => new { b.Reference }).IsClustered(false);//Non clustered index grants performance for checking room availability, while letting the clustered index handle lookups
+        }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseSqlServer(DBString);
+            }
+        }
+
+
+    }
+}
