@@ -21,7 +21,7 @@ namespace Waracle_HotelAPI.Controllers
         {
             logger.LogInformation("Clear Data API Called");
             bool result = await seedService.ClearDatabase();
-            if (!result) return BadRequest("Database Could not be cleared");
+            if (!result) return Problem("Database Could not be cleared");
             return Ok("Database Succesfully Cleared");
         }
 
@@ -30,7 +30,7 @@ namespace Waracle_HotelAPI.Controllers
         {
             logger.LogInformation("Seed Data API Called");
             bool result = await seedService.SeedDatabase();
-            if (!result) return BadRequest("Database Could not be seeded, it may not have been empty");
+            if (!result) return Problem("Database Could not be seeded, it may not have been empty");
             return Ok("Database Succesfully Seeded");
         }
 

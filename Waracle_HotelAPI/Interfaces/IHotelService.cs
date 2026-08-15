@@ -4,7 +4,7 @@ namespace Waracle_HotelAPI.Interfaces
 {
     public interface IHotelService
     {
-        Task<List<HotelDetails>> GetAllHotelInfo();
-        Task<List<HotelDetails>> GetHotelInfo(string HotelName);
+        Task<HotelList> GetAllHotelInfo();
+        Task<HotelList> GetHotelInfo(string HotelName);
     }
 }

@@ -15,40 +15,47 @@ namespace Waracle_HotelAPI.Services
             this.context = context;
             this.logger = logger;
         }
-        public async Task<List<HotelDetails>> GetHotelInfo(string HotelName)
+        public async Task<HotelList> GetHotelInfo(string HotelName)
         {
+            HotelList results = new();
             try
             {
                 var Hotels = await context.Hotels.Select(x => new HotelDetails(x.Id, x.Name, x.Rooms.Count)).ToListAsync();
                 //We dont have a massive list of hotels, there are ways to make this more efficent later if needed
                 //Namely by Caching the hotel list somewhere
-                List<HotelDetails> Results = new();
+
                 foreach (HotelDetails hotel in Hotels)
                 {
                     int AllowedDistance = 1 + (HotelName.Length / 4);
-                    if (LevenshteinDistance(hotel.Name, HotelName) <= AllowedDistance) Results.Add(hotel);
+                    if (LevenshteinDistance(hotel.Name, HotelName) <= AllowedDistance) results.HotelDetails.Add(hotel);
 
                 }
-                return Results;
+                return results;
             }
             catch (Exception ex)
             {
                 logger.LogError($"Unable to get Hotel Details for search {HotelName} - {ex.Message} : {ex.StackTrace}");
-                throw;
+                results.Message = "Unable to get Hotel Details";
+                results.Response = ResponseType.Error;
+                return results;
             }
 
         }
 
-        public async Task<List<HotelDetails>> GetAllHotelInfo()
+        public async Task<HotelList> GetAllHotelInfo()
         {
+            HotelList results = new();
             try
             {
-                return await context.Hotels.Select(x => new HotelDetails(x.Id, x.Name, x.Rooms.Count)).ToListAsync();
+                results.HotelDetails = await context.Hotels.Select(x => new HotelDetails(x.Id, x.Name, x.Rooms.Count)).ToListAsync();
+                return results;
             }
             catch (Exception ex)
             {
                 logger.LogError($"Unable to get All Hotel Details - {ex.Message} : {ex.StackTrace}");
-                throw;
+                results.Message = "Unable to get Hotel Details";
+                results.Response = ResponseType.Error;
+                return results;
             }
         }
 

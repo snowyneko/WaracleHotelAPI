@@ -20,8 +20,11 @@ namespace Waracle_HotelAPI.Services
             try
             {
                 logger.LogWarning("Clearing Database Started");
-                await context.Database.EnsureDeletedAsync();
-                await context.Database.EnsureCreatedAsync();
+                await context.Bookings.ExecuteDeleteAsync(); 
+                await context.Rooms.ExecuteDeleteAsync();    
+                await context.Hotels.ExecuteDeleteAsync();
+                //Ideally id remove FK, then Truncate but we can reset Identities this way. We dont /need/ to reset identities on a clear but its preferable.
+                await context.Database.ExecuteSqlRawAsync("DBCC CHECKIDENT('Hotels', RESEED, 0); DBCC CHECKIDENT('Rooms',RESEED, 0); DBCC CHECKIDENT('Bookings', RESEED, 0); ");
                 logger.LogWarning("Clearing Database Complete");
                 return true;
             }
@@ -30,7 +33,6 @@ namespace Waracle_HotelAPI.Services
                 logger.LogError($"Clear Database Failed - {ex.Message} : {ex.StackTrace}");
                 return false;
             }
-            return true;
         }
 
         public async Task<bool> SeedDatabase()

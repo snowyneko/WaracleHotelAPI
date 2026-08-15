@@ -5,7 +5,7 @@ namespace Waracle_HotelAPI.Interfaces
 {
     public interface IBookingService
     {
-        Task<List<BookingSet>?> CheckForAvailableBookings(BookingEnquiry request);
+        Task<BookingOptions> CheckForAvailableBookings(BookingEnquiry request);
         Task<BookingResult> CreateBooking(BookingRequest request);
         Task<BookingDetails> FindBooking(string Reference);
     }

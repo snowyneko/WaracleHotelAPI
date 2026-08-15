@@ -2,7 +2,6 @@
 using Serilog.Core;
 using Waracle_HotelAPI.Interfaces;
 using Waracle_HotelAPI.ReturnModels;
-using Waracle_HotelAPI.Services;
 
 namespace Waracle_HotelAPI.Controllers
 {
@@ -19,36 +18,50 @@ namespace Waracle_HotelAPI.Controllers
             this.logger = logger;
         }
 
-        [HttpGet("Get")]
-        public async Task<ActionResult<List<HotelDetails>>> Get([FromQuery] string searchString)
+        [HttpGet("Search")]
+        public async Task<ActionResult<HotelList>> Search([FromQuery] string searchString)
         {
             logger.LogInformation($"Get Hotels API Called with argument {searchString}");
             try
             {
-                List<HotelDetails> results = await hotelService.GetHotelInfo(searchString);
-                return Ok(results);
+                HotelList results = await hotelService.GetHotelInfo(searchString);
+                return results.Response switch
+                {
+                    ResponseType.OK => results,
+                    ResponseType.NotFound => NotFound(results.Message),
+                    ResponseType.Conflict => Conflict(results.Message),
+                    ResponseType.Error => Problem(results.Message),
+                    _ => BadRequest("Unknown Error")
+                };
             }
             catch (Exception ex)
             {
                 logger.LogError($"Could not Search Hotel Details {ex.Message} : {ex.StackTrace}");
-                return BadRequest("An Error Occured Attempting to Search Hotels");
+                return Problem("An Error Occured Attempting to Search Hotels");
             }
 
         }
 
         [HttpGet("GetAll")]
-        public async Task<ActionResult<List<HotelDetails>>> GetAll()
+        public async Task<ActionResult<HotelList>> GetAll()
         {
             logger.LogInformation("Get All Hotels API Called");
             try
             {
-                List<HotelDetails> results = await hotelService.GetAllHotelInfo();
-                return Ok(results);
+                HotelList results = await hotelService.GetAllHotelInfo();
+                return results.Response switch
+                {
+                    ResponseType.OK => results,
+                    ResponseType.NotFound => NotFound(results.Message),
+                    ResponseType.Conflict => Conflict(results.Message),
+                    ResponseType.Error => Problem(results.Message),
+                    _ => BadRequest("Unknown Error")
+                };
             }
             catch (Exception ex)
             {
                 logger.LogError($"Could not Fetch Hotel Details {ex.Message} : {ex.StackTrace}");
-                return BadRequest("An Error Occured Attempting to Fetch Hotels");
+                return Problem("An Error Occured Attempting to Fetch Hotels");
             }
         
         }

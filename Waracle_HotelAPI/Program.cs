@@ -3,8 +3,11 @@ using Scalar.AspNetCore;
 using Waracle_HotelAPI;
 using Waracle_HotelAPI.Interfaces;
 using Waracle_HotelAPI.Services;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog((context, services, configuration) =>
+    configuration.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddDbContext<BookingDBContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 // Add services to the container.

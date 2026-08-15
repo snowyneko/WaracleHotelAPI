@@ -1,11 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Waracle_HotelAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class manytomanybookings : Migration
+    public partial class ManyToManyBookings : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

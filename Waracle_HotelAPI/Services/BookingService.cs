@@ -24,38 +24,48 @@ namespace Waracle_HotelAPI.Services
         public async Task<BookingDetails> FindBooking(string Reference)
         {
             BookingDetails bookingDetails = new BookingDetails();
-            Booking? booking= await context.Bookings.AsNoTracking().Where(x=>x.Reference==Reference).Include(b=>b.Rooms).FirstOrDefaultAsync();
-            if(booking is null) { bookingDetails.Message = "Booking with Reference not found"; return bookingDetails; }
-            if (booking.Rooms.Count==0 ) 
+            Booking? booking = await context.Bookings.AsNoTracking().Where(x => x.Reference == Reference).Include(b => b.Rooms).FirstOrDefaultAsync();
+            if (booking is null)
+            {
+                bookingDetails.Message = "Booking with Reference not found";
+                bookingDetails.Response = ResponseType.NotFound;
+                return bookingDetails;
+            }
+            if (booking.Rooms.Count == 0)
             {
                 logger.LogError($"Booking {Reference} Contains no Rooms, Those Rooms may have been deleted.");
                 bookingDetails.Message = "There is an issue with this Booking, please contact our helpdesk";
+                bookingDetails.Response = ResponseType.Error;
                 return bookingDetails;
             }
-            Hotel? hotel= await context.Hotels.AsNoTracking().Where(h=>h.Id==booking.Rooms.First().HotelId).FirstOrDefaultAsync();
-            if(hotel is null) {
+            Hotel? hotel = await context.Hotels.AsNoTracking().Where(h => h.Id == booking.Rooms.First().HotelId).FirstOrDefaultAsync();
+            if (hotel is null)
+            {
                 logger.LogError($"Booking {Reference} Does not Reference an available Hotel, it may have been deleted.");
                 bookingDetails.Message = "There is an issue with this Booking, please contact our helpdesk";
+                bookingDetails.Response = ResponseType.Error;
                 return bookingDetails;
             }
-            bookingDetails.HotelName= hotel.Name;
+            bookingDetails.HotelName = hotel.Name;
             bookingDetails.Message = "Booking Details Retreived.";
             bookingDetails.BookingReference = booking.Reference;
-            bookingDetails.ArrivalDate= booking.ArrivalDate;
-            bookingDetails.DepartureDate= booking.DepartureDate;
-            foreach(Room room in booking.Rooms) { bookingDetails.RoomTypes.Add(room.RoomType.ToString()); }
+            bookingDetails.ArrivalDate = booking.ArrivalDate;
+            bookingDetails.DepartureDate = booking.DepartureDate;
+            foreach (Room room in booking.Rooms) { bookingDetails.RoomTypes.Add(room.RoomType.ToString()); }
             return bookingDetails;
 
 
         }
 
-        public async Task<List<BookingSet>?> CheckForAvailableBookings(BookingEnquiry request)
+        public async Task<BookingOptions> CheckForAvailableBookings(BookingEnquiry request)
         {
+
+            BookingOptions bookingOptions = new BookingOptions();
             // 1. Fetch hotel and free rooms from DB
             var query = context.Hotels.AsNoTracking();
 
-            if (string.IsNullOrEmpty(request.HotelName)) {   query = query.Where(x => x.Id == request.HotelID); }
-            else  { query = query.Where(x => x.Name == request.HotelName); }
+            if (string.IsNullOrEmpty(request.HotelName)) { query = query.Where(x => x.Id == request.HotelID); }
+            else { query = query.Where(x => x.Name == request.HotelName); }
 
             Hotel? hotel = await query
                 .Include(x => x.Rooms)
@@ -65,7 +75,9 @@ namespace Waracle_HotelAPI.Services
             if (hotel is null)
             {
                 logger.LogError($"Unknown Hotel Searched for {request.HotelName} | {request.HotelID}");
-                throw new InvalidOperationException($"Hotel Not Found");
+                bookingOptions.Message = "Hotel not Found";
+                bookingOptions.Response = ResponseType.NotFound;
+                return bookingOptions;
             }
 
             List<Room> freeRooms = hotel.Rooms
@@ -74,7 +86,8 @@ namespace Waracle_HotelAPI.Services
                 .ToList();
 
             // 2. Delegate algorithm to pure helper method
-            return FindRoomCombinations(freeRooms, request.NoOfPeople);
+            bookingOptions.Options = FindRoomCombinations(freeRooms, request.NoOfPeople);
+            return bookingOptions;
         }
 
         public async Task<BookingResult> CreateBooking(BookingRequest request)
@@ -88,11 +101,12 @@ namespace Waracle_HotelAPI.Services
             Hotel? hotel = await query.FirstOrDefaultAsync();
             if (hotel is null)
             {
-                logger.LogWarning($"User attempted to book unavailable rooms at {hotel.Name}");
+                logger.LogWarning($"The user Attempted to book a room at an unknown hotel {request.HotelName} : {request.HotelID}");
                 bookingResult.Message = "Requested Hotel not found";
+                bookingResult.Response = ResponseType.NotFound;
                 return bookingResult;
             }
-            bookingResult.HotelName= hotel.Name;
+            bookingResult.HotelName = hotel.Name;
 
             //We must apply an update lock against the hotel rooms to stop any other query reading those rows. This is critical because we arent actually
             //changing any of these rows to create a booking. as a result since the first step of creating a booking is reading the room list, we should
@@ -120,11 +134,12 @@ namespace Waracle_HotelAPI.Services
                     }
                 }
             }
-            if (RoomsToBook.Count() != request.RequestedRooms.Count()) 
+            if (RoomsToBook.Count() != request.RequestedRooms.Count())
             {
                 logger.LogWarning($"User attempted to book unavailable rooms at {hotel.Name}");
                 bookingResult.Message = "Requested Rooms are not Available";
-                    return bookingResult; 
+                bookingResult.Response = ResponseType.Conflict;
+                return bookingResult;
             }
             //Ok Create the new booking
             Booking booking = new Booking() { ArrivalDate = request.Arrival, DepartureDate = request.Departure };
@@ -139,8 +154,7 @@ namespace Waracle_HotelAPI.Services
             booking.Reference = $"{Guid.NewGuid().ToString().Substring(0, 4)}-{10000 + booking.Id}";
             await context.SaveChangesAsync();
             await transaction.CommitAsync();
-            bookingResult.Successfull = true;
-            bookingResult.BookingReference=booking.Reference;
+            bookingResult.BookingReference = booking.Reference;
             bookingResult.Message = "Rooms Succesfully Booked";
 
             return bookingResult;
@@ -193,7 +207,7 @@ namespace Waracle_HotelAPI.Services
                         {
                             //We are checking if the most recent room can handle everyone by itself because otherwise.
                             //for like 2 people we suggest a single and a double which is a little silly.
-                           if(freeRooms[j].Capacity< targetPeople) sets.Add(set);
+                            if (freeRooms[j].Capacity < targetPeople) sets.Add(set);
                             break;
                         }
                     }

@@ -5,6 +5,7 @@ namespace Waracle_HotelAPI.ReturnModels
     public class BookingDetails
     {
         public string BookingReference { get; set; } = "";
+        public ResponseType Response { get; set; } = ResponseType.OK;
         public string Message { get; set; } = "";
         public string HotelName { get; set; } = "";
         public List<string> RoomTypes { get; set; } = new();

@@ -21,33 +21,51 @@ namespace Waracle_HotelAPI.Controllers
         }
 
 
-        [HttpGet("Get")]
-        public async Task<ActionResult<BookingDetails>> Get([FromQuery] string Reference)
+        [HttpGet("Search")]
+        public async Task<ActionResult<BookingDetails>> Search([FromQuery] string Reference)
         {
             logger.LogInformation($"Get Booking Called");
             try
             {
-                return await bookingService.FindBooking(Reference);
+                BookingDetails details = await bookingService.FindBooking(Reference);
+                return details.Response switch
+                {
+                    ResponseType.OK => details,
+                    ResponseType.NotFound => NotFound(details.Message),
+                    ResponseType.Conflict => Conflict(details.Message),
+                    ResponseType.Error => Problem(details.Message),
+                    _ => BadRequest("Unknown Error")
+                };
             }
             catch (Exception ex)
             {
                 logger.LogError($"Error Thrown Searching for Booking {Reference} {ex.Message} : {ex.StackTrace}");
-                return BadRequest("An Error Occured Attempting to Locate your Booking");
+                return Problem("An Error Occured Attempting to Locate your Booking");
             }
         }
 
         [HttpPost("FindAvailableRooms")]
-        public async Task<ActionResult<List<BookingSet>>> FindAvailableRooms([FromBody] BookingEnquiry enquiry)
+        public async Task<ActionResult<BookingOptions>> FindAvailableRooms([FromBody] BookingEnquiry enquiry)
         {
+            if(enquiry.NoOfPeople<1) return BadRequest("There must be at least one guest.");
             logger.LogInformation($"find Available Rooms Called");
             try
             {
-                return await bookingService.CheckForAvailableBookings(enquiry);
+                
+                BookingOptions options = await bookingService.CheckForAvailableBookings(enquiry);
+                return options.Response switch
+                {
+                    ResponseType.OK => options,
+                    ResponseType.NotFound => NotFound(options.Message),
+                    ResponseType.Conflict => Conflict(options.Message),
+                    ResponseType.Error => Problem(options.Message),
+                    _ => BadRequest("Unknown Error")
+                };
             }
             catch(Exception ex)
             {
                 logger.LogError($"Error Thrown Searching for Rooms {ex.Message} : {ex.StackTrace}");
-                return BadRequest("An Error Occured Attempting to Find Available Rooms");
+                return Problem("An Error Occured Attempting to Find Available Rooms");
             }
         }
 
@@ -59,13 +77,21 @@ namespace Waracle_HotelAPI.Controllers
             {
                 if(request.Arrival < DateOnly.FromDateTime(DateTime.UtcNow)) return BadRequest("Your arrival day cannot be in the past");
                 if (request.Departure <=request.Arrival) return BadRequest("Your departure day must be after your arrival day.");
-                if(request.RequestedRooms.Count()==0) return BadRequest("You must request at least one room");
-                return await bookingService.CreateBooking(request);
+                if(request.RequestedRooms is null ||  request.RequestedRooms.Count()==0) return BadRequest("You must request at least one room");
+                BookingResult result = await bookingService.CreateBooking(request);
+                return result.Response switch
+                {
+                    ResponseType.OK => result,
+                    ResponseType.NotFound => NotFound(result.Message),
+                    ResponseType.Conflict => Conflict(result.Message),
+                    ResponseType.Error => BadRequest(result.Message),
+                    _ => Problem("Unknown Error")
+                };
             }
             catch (Exception ex)
             {
                 logger.LogError($"Error Thrown Creating Booking {ex.Message} : {ex.StackTrace}");
-                return BadRequest("An Error Occured Attempting to Create a Booking");
+                return Problem("An Error Occured Attempting to Create a Booking");
             }
         }
       
