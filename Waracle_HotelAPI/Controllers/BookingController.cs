@@ -4,7 +4,6 @@ using Waracle_HotelAPI.Interfaces;
 using Waracle_HotelAPI.Models;
 using Waracle_HotelAPI.RequestModels;
 using Waracle_HotelAPI.ReturnModels;
-using Waracle_HotelAPI.Services;
 
 namespace Waracle_HotelAPI.Controllers
 {
@@ -22,22 +21,52 @@ namespace Waracle_HotelAPI.Controllers
         }
 
 
-        [HttpGet]
-        public async Task<ActionResult<Booking>> Get([FromQuery] string Reference)
+        [HttpGet("Get")]
+        public async Task<ActionResult<BookingDetails>> Get([FromQuery] string Reference)
         {
-            throw new NotImplementedException();
+            logger.LogInformation($"Get Booking Called");
+            try
+            {
+                return await bookingService.FindBooking(Reference);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error Thrown Searching for Booking {Reference} {ex.Message} : {ex.StackTrace}");
+                return BadRequest("An Error Occured Attempting to Locate your Booking");
+            }
         }
 
         [HttpPost("FindAvailableRooms")]
         public async Task<ActionResult<List<BookingSet>>> FindAvailableRooms([FromBody] BookingEnquiry enquiry)
         {
-            return await bookingService.CheckForAvailableBookings(enquiry);
+            logger.LogInformation($"find Available Rooms Called");
+            try
+            {
+                return await bookingService.CheckForAvailableBookings(enquiry);
+            }
+            catch(Exception ex)
+            {
+                logger.LogError($"Error Thrown Searching for Rooms {ex.Message} : {ex.StackTrace}");
+                return BadRequest("An Error Occured Attempting to Find Available Rooms");
+            }
         }
 
-        [HttpPost]
-        public async Task<ActionResult<BookingResult>> BookRooms([FromBody] BookingRequest request)
+        [HttpPost("CreateBooking")]
+        public async Task<ActionResult<BookingResult>> CreateBooking([FromBody] BookingRequest request)
         {
-            throw new NotImplementedException();
+            logger.LogInformation($"Create Booking Called");
+            try
+            {
+                if(request.Arrival < DateOnly.FromDateTime(DateTime.UtcNow)) return BadRequest("Your arrival day cannot be in the past");
+                if (request.Departure <=request.Arrival) return BadRequest("Your departure day must be after your arrival day.");
+                if(request.RequestedRooms.Count()==0) return BadRequest("You must request at least one room");
+                return await bookingService.CreateBooking(request);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error Thrown Creating Booking {ex.Message} : {ex.StackTrace}");
+                return BadRequest("An Error Occured Attempting to Create a Booking");
+            }
         }
       
     }

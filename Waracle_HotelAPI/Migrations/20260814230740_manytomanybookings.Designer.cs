@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Waracle_HotelAPI;
 
@@ -11,9 +12,11 @@ using Waracle_HotelAPI;
 namespace Waracle_HotelAPI.Migrations
 {
     [DbContext(typeof(BookingDBContext))]
-    partial class BookingDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260814230740_manytomanybookings")]
+    partial class manytomanybookings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,15 +61,22 @@ namespace Waracle_HotelAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RoomType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Reference");
 
                     SqlServerIndexBuilderExtensions.IsClustered(b.HasIndex("Reference"), false);
 
-                    b.HasIndex("DepartureDate", "ArrivalDate");
+                    b.HasIndex("RoomId", "DepartureDate", "ArrivalDate");
 
-                    SqlServerIndexBuilderExtensions.IsClustered(b.HasIndex("DepartureDate", "ArrivalDate"), false);
+                    SqlServerIndexBuilderExtensions.IsClustered(b.HasIndex("RoomId", "DepartureDate", "ArrivalDate"), false);
 
                     b.ToTable("Bookings");
                 });
