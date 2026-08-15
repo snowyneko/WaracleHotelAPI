@@ -120,6 +120,7 @@ namespace Waracle_HotelAPI.Services
             //Lets see if we can find rooms to match our requirements
             bool[] Assigned = new bool[freeRooms.Count()];
             List<Room> RoomsToBook = new();
+
             foreach (string type in request.RequestedRooms)
             {
                 for (int i = 0; i < freeRooms.Count; i++)
@@ -176,7 +177,7 @@ namespace Waracle_HotelAPI.Services
         private List<BookingSet> FindRoomCombinations(List<Room> freeRooms, int targetPeople)
         {
             List<BookingSet> sets = new();
-
+            int bestfit = 0;
             for (int i = 0; i < freeRooms.Count; i++)
             {
                 int capacity = freeRooms[i].Capacity;
@@ -186,10 +187,12 @@ namespace Waracle_HotelAPI.Services
                 {
                     BookingSet singleSet = new();
                     singleSet.RoomSet.Add(freeRooms[i].RoomType.ToString());
+                    singleSet.TotalCapacity = capacity;
                     sets.Add(singleSet);
+                    bestfit = capacity;
                     break;
                 }
-
+              
                 for (int offset = 1; offset < freeRooms.Count - i; offset++)
                 {
                     BookingSet set = new();
@@ -205,7 +208,9 @@ namespace Waracle_HotelAPI.Services
                         {
                             //We are checking if the most recent room can handle everyone by itself because otherwise.
                             //for like 2 people we suggest a single and a double which is a little silly.
+                           set.TotalCapacity= capacity; 
                             if (freeRooms[j].Capacity < targetPeople) sets.Add(set);
+                            if (capacity< bestfit || bestfit==0)bestfit=capacity;//we are trying to identify whats the smallest room capacity we can find that fits people
                             break;
                         }
                     }
@@ -213,7 +218,7 @@ namespace Waracle_HotelAPI.Services
             }
 
             // Deduplicate combinations before returning
-            return sets
+            return sets.Where(s=>s.TotalCapacity<=bestfit)
                 .DistinctBy(s => string.Join(",", s.RoomSet.OrderBy(x => x)))
                 .ToList();
         }

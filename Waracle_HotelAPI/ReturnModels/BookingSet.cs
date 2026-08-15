@@ -12,6 +12,7 @@ namespace Waracle_HotelAPI.ReturnModels
     public class BookingSet
     {
         public List<string> RoomSet { get; set; } = new();
+        internal int TotalCapacity { get; set; } = 0;
 
     }
 }
