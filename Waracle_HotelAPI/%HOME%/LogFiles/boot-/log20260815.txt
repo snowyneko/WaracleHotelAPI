@@ -1,0 +1,4 @@
+2026-08-15 14:32:24.634 +01:00 [INF] Now listening on: http://localhost:5028
+2026-08-15 14:32:24.675 +01:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-08-15 14:32:24.676 +01:00 [INF] Hosting environment: Development
+2026-08-15 14:32:24.676 +01:00 [INF] Content root path: C:\Users\snown\source\repos\Waracle_HotelAPI\Waracle_HotelAPI

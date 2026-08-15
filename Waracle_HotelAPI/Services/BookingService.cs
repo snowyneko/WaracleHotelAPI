@@ -1,6 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Primitives;
-using System.Net;
 using Waracle_HotelAPI.Interfaces;
 using Waracle_HotelAPI.Models;
 using Waracle_HotelAPI.RequestModels;

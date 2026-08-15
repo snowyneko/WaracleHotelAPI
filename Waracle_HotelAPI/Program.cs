@@ -6,7 +6,6 @@ using Waracle_HotelAPI.Services;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
-Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "logs"));
 builder.Host.UseSerilog((context, services, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
 
