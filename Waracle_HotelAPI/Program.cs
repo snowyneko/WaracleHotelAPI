@@ -6,6 +6,7 @@ using Waracle_HotelAPI.Services;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "logs"));
 builder.Host.UseSerilog((context, services, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
 
@@ -23,10 +24,8 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+
+app.MapOpenApi();
 
 app.MapScalarApiReference(options =>
 {
