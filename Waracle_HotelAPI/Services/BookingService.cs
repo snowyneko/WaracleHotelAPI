@@ -11,14 +11,14 @@ namespace Waracle_HotelAPI.Services
     public class BookingService : IBookingService
     {
         private readonly BookingDBContext context;
-        private readonly ILogger<HotelService> logger;
-        private readonly IHotelService hotelService;
+        private readonly ILogger<BookingService> logger;
 
-        public BookingService(BookingDBContext context, ILogger<HotelService> logger, IHotelService hotelService)
+
+        public BookingService(BookingDBContext context, ILogger<BookingService> logger)
         {
             this.context = context;
             this.logger = logger;
-            this.hotelService = hotelService;
+
         }
 
         public async Task<BookingDetails> FindBooking(string Reference)
